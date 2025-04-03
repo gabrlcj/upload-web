@@ -14,6 +14,11 @@ interface UploadWidgetUploadItemProps {
 export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadItemProps) {
   const cancelUpload = useUploads(store => store.cancelUpload)
 
+  const progress = Math.min(
+    Math.round((upload.uploadSizeInBytes * 100) / upload.originalSizeInBytes),
+    100
+  )
+
   return (
     <motion.div
       className="p-3 flex flex-col gap-3 rounded-lg shadow-shape-content bg-white/2 relative overflow-hidden"
@@ -29,7 +34,9 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
         </span>
 
         <span className="text-xxs text-zinc-400 flex gap-1.5 items-center">
-          <span className="line-through">{formatFileSize(upload.file.size)}</span>
+          <span className="line-through">
+            {formatFileSize(upload.originalSizeInBytes)}
+          </span>
           <div className="size-1 rounded-full bg-zinc-700"></div>
           <span>
             300KB
@@ -38,19 +45,20 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
             </span>
           </span>
           <div className="size-1 rounded-full bg-zinc-700"></div>
-          {upload.status === 'progress' || upload.status === 'success' && <span>45%</span>}
+          {upload.status === 'progress' || upload.status === 'success' && <span>{progress}%</span>}
           {upload.status === 'error' && <span className='text-red-400'>Error</span>}
           {upload.status === 'canceled' && <span className='text-yellow-400'>Canceled</span>}
         </span>
       </div>
 
       <Progress.Root
+        value={progress}
         data-status={upload.status}
         className="group bg-zinc-800 rounded-full h-1 overflow-hidden"
       >
         <Progress.Indicator
-          className="bg-indigo-500 h-1 group-data-[status=sucess]:bg-green-500 group-data-[status=error]:bg-red-500 group-data-[status=canceled]:bg-yellow-500"
-          style={{ width: upload.status === 'progress' ? '47%' : '100%' }} 
+          className="bg-indigo-500 h-1 group-data-[status=sucess]:bg-green-500 group-data-[status=error]:bg-red-500 group-data-[status=canceled]:bg-yellow-500 transition-all"
+          style={{ width: upload.status === 'progress' ? `${progress}%` : '100%' }} 
         />
       </Progress.Root>
 
