@@ -3,14 +3,17 @@ import { motion } from 'motion/react'
 
 import { Download, ImageUp, Link2, RefreshCcw, X } from "lucide-react";
 import { Button } from "./ui/button";
-import { Upload } from '../store/upload';
+import { Upload, useUploads } from '../store/upload';
 import { formatFileSize } from '../utils/parse-bytes';
 
 interface UploadWidgetUploadItemProps {
+  uploadId: string
   upload: Upload
 }
 
-export function UploadWidgetUploadItem({ upload }: UploadWidgetUploadItemProps) {
+export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadItemProps) {
+  const cancelUpload = useUploads(store => store.cancelUpload)
+
   return (
     <motion.div
       className="p-3 flex flex-col gap-3 rounded-lg shadow-shape-content bg-white/2 relative overflow-hidden"
@@ -35,28 +38,43 @@ export function UploadWidgetUploadItem({ upload }: UploadWidgetUploadItemProps) 
             </span>
           </span>
           <div className="size-1 rounded-full bg-zinc-700"></div>
-          <span>45%</span>
+          {upload.status === 'progress' || upload.status === 'success' && <span>45%</span>}
+          {upload.status === 'error' && <span className='text-red-400'>Error</span>}
+          {upload.status === 'canceled' && <span className='text-yellow-400'>Canceled</span>}
         </span>
       </div>
 
-      <Progress.Root className="bg-zinc-800 rounded-full h-1 overflow-hidden">
-        <Progress.Indicator className="bg-indigo-500 h-1" style={{ width: '47%' }} />
+      <Progress.Root
+        data-status={upload.status}
+        className="group bg-zinc-800 rounded-full h-1 overflow-hidden"
+      >
+        <Progress.Indicator
+          className="bg-indigo-500 h-1 group-data-[status=sucess]:bg-green-500 group-data-[status=error]:bg-red-500 group-data-[status=canceled]:bg-yellow-500"
+          style={{ width: upload.status === 'progress' ? '47%' : '100%' }} 
+        />
       </Progress.Root>
 
       <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
-        <Button size='icon-sm'>
+        <Button size='icon-sm' disabled={upload.status !== 'success'}>
           <Download strokeWidth={1.5} className="size-4" />
           <span className="sr-only">Download compressed image</span>
         </Button>
-        <Button size='icon-sm'>
+        <Button size='icon-sm' disabled={upload.status !== 'success'}>
           <Link2 strokeWidth={1.5} className="size-4" />
           <span className="sr-only">Copy remote URL</span>
         </Button>
-        <Button size='icon-sm'>
+        <Button
+          size='icon-sm'
+          disabled={!['canceled', 'error'].includes(upload.status)}
+        >
           <RefreshCcw strokeWidth={1.5} className="size-4" />
           <span className="sr-only">Retry upload</span>
         </Button>
-        <Button size='icon-sm'>
+        <Button
+          size='icon-sm'
+          onClick={() => cancelUpload(uploadId)}
+          disabled={upload.status !== 'progress'}
+        >
           <X strokeWidth={1.5} className="size-4" />
           <span className="sr-only">Cancel upload</span>
         </Button>
