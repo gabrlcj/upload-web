@@ -1,10 +1,11 @@
 import * as Progress from '@radix-ui/react-progress'
-import { motion } from 'motion/react'
 
+import { motion } from 'motion/react'
 import { Download, ImageUp, Link2, RefreshCcw, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Upload, useUploads } from '../store/upload';
 import { formatFileSize } from '../utils/parse-bytes';
+import { downloadUrl } from '../utils/download-url';
 
 interface UploadWidgetUploadItemProps {
   uploadId: string
@@ -15,7 +16,9 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
   const cancelUpload = useUploads(store => store.cancelUpload)
 
   const progress = Math.min(
-    Math.round((upload.uploadSizeInBytes * 100) / upload.originalSizeInBytes),
+    upload.compressedSizeInBytes
+      ? Math.round((upload.uploadSizeInBytes * 100) / upload.originalSizeInBytes)
+      : 0,
     100
   )
 
@@ -30,7 +33,7 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
         <span className="text-xs font-medium flex items-center gap-1">
           <ImageUp strokeWidth={1.5} className="size-3 text-zinc-300" />
 
-          <span>{ upload.name }</span>
+          <span className='w-[180px] truncate'>{ upload.name }</span>
         </span>
 
         <span className="text-xxs text-zinc-400 flex gap-1.5 items-center">
@@ -39,10 +42,12 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
           </span>
           <div className="size-1 rounded-full bg-zinc-700"></div>
           <span>
-            300KB
-            <span className="text-green-400 ml-1">
-              -94%
-            </span>
+            {formatFileSize(upload.compressedSizeInBytes ?? 0)}
+            {upload.compressedSizeInBytes && (
+              <span className="text-green-400 ml-1">
+                -{Math.round((upload.originalSizeInBytes - upload.compressedSizeInBytes) * 100 / 100)}%
+              </span>
+            )}
           </span>
           <div className="size-1 rounded-full bg-zinc-700"></div>
           {upload.status === 'progress' || upload.status === 'success' && <span>{progress}%</span>}
@@ -58,16 +63,28 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
       >
         <Progress.Indicator
           className="bg-indigo-500 h-1 group-data-[status=sucess]:bg-green-500 group-data-[status=error]:bg-red-500 group-data-[status=canceled]:bg-yellow-500 transition-all"
-          style={{ width: upload.status === 'progress' ? `${progress}%` : '100%' }} 
+          style={{ width: upload.status === 'progress' ? `${progress}%` : '100%' }}
         />
       </Progress.Root>
 
-      <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
-        <Button size='icon-sm' disabled={upload.status !== 'success'}>
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        <Button
+          size='icon-sm'
+          disabled={!upload.remoteUrl}
+          onClick={() => {
+            if (upload.remoteUrl) {
+              downloadUrl(upload.remoteUrl)
+            }
+          }}
+        >
           <Download strokeWidth={1.5} className="size-4" />
           <span className="sr-only">Download compressed image</span>
         </Button>
-        <Button size='icon-sm' disabled={upload.status !== 'success'}>
+        <Button
+          size='icon-sm'
+          disabled={!upload.remoteUrl}
+          onClick={() => upload.remoteUrl && navigator.clipboard.writeText(upload.remoteUrl)}
+        >
           <Link2 strokeWidth={1.5} className="size-4" />
           <span className="sr-only">Copy remote URL</span>
         </Button>
