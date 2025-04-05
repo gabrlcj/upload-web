@@ -14,6 +14,7 @@ interface UploadWidgetUploadItemProps {
 
 export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadItemProps) {
   const cancelUpload = useUploads(store => store.cancelUpload)
+  const retryUpload = useUploads(store => store.retryUpload)
 
   const progress = Math.min(
     upload.compressedSizeInBytes
@@ -45,12 +46,16 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
             {formatFileSize(upload.compressedSizeInBytes ?? 0)}
             {upload.compressedSizeInBytes && (
               <span className="text-green-400 ml-1">
-                -{Math.round((upload.originalSizeInBytes - upload.compressedSizeInBytes) * 100 / 100)}%
+                -{
+                  Math.round(
+                  ((upload.originalSizeInBytes - upload.compressedSizeInBytes) * 100) / upload.originalSizeInBytes)
+                }%
               </span>
             )}
           </span>
           <div className="size-1 rounded-full bg-zinc-700"></div>
-          {upload.status === 'progress' || upload.status === 'success' && <span>{progress}%</span>}
+          {upload.status === 'success' && <span>100%</span>}
+          {upload.status === 'progress' && <span>{progress}%</span>}
           {upload.status === 'error' && <span className='text-red-400'>Error</span>}
           {upload.status === 'canceled' && <span className='text-yellow-400'>Canceled</span>}
         </span>
@@ -59,10 +64,10 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
       <Progress.Root
         value={progress}
         data-status={upload.status}
-        className="group bg-zinc-800 rounded-full h-1 overflow-hidden"
+        className="bg-zinc-800 rounded-full h-1 overflow-hidden group"
       >
         <Progress.Indicator
-          className="bg-indigo-500 h-1 group-data-[status=sucess]:bg-green-500 group-data-[status=error]:bg-red-500 group-data-[status=canceled]:bg-yellow-500 transition-all"
+          className="bg-indigo-500 h-1 group-data-[status=success]:bg-green-500 group-data-[status=error]:bg-red-500 group-data-[status=canceled]:bg-yellow-500 transition-all"
           style={{ width: upload.status === 'progress' ? `${progress}%` : '100%' }}
         />
       </Progress.Root>
@@ -91,6 +96,7 @@ export function UploadWidgetUploadItem({ uploadId, upload }: UploadWidgetUploadI
         <Button
           size='icon-sm'
           disabled={!['canceled', 'error'].includes(upload.status)}
+          onClick={() => retryUpload(uploadId)}
         >
           <RefreshCcw strokeWidth={1.5} className="size-4" />
           <span className="sr-only">Retry upload</span>
