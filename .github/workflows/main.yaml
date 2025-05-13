@@ -6,8 +6,8 @@ on:
       - main
 
 env:
-  AWS_BUCKET_NAME: ftr-rocketseat-upload-widget-web-static/
-  SOURCE_FOLDER: ./dist
+  AWS_BUCKET_NAME: "ftr-rocketseat-upload-widget-web-static/"
+  SOURCE_FOLDER: "./dist"
 
 jobs:
   deploy:
