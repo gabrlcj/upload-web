@@ -6,7 +6,8 @@ on:
       - main
 
 env:
-  AWS_BUCKET_NAME: ftr-rocketseat-upload-widget-web-static/
+  AWS_BUCKET_NAME_STATIC: ftr-rocketseat-upload-widget-web-static/
+  AWS_BUCKET_NAME_CDN: ftr-rocketseat-upload-widget-web-cdn/
   SOURCE_FOLDER: ./dist
 
 jobs:
@@ -47,7 +48,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Config AWS S3 sync
-        id: config-aws-s2-sync
+      - name: Config AWS S3 sync static
+        id: config-aws-s2-sync-static
         run: |
-          aws s3 sync ${{ env.SOURCE_FOLDER }} s3://${{ env.AWS_BUCKET_NAME }} --delete
+          aws s3 sync ${{ env.SOURCE_FOLDER }} s3://${{ env.AWS_BUCKET_NAME_STATIC }} --delete
+
+      - name: Config AWS S3 sync CDN
+        id: config-aws-s2-sync-cdn
+        run: |
+          aws s3 sync ${{ env.SOURCE_FOLDER }} s3://${{ env.AWS_BUCKET_NAME_CDN }} --delete
